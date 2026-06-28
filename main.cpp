@@ -24,7 +24,9 @@ int main() {
         cin >> processes[i].arrival_time;
         cout << "  Enter Burst Time: ";
         cin >> processes[i].burst_time;
-        processes[i].remaining_time = processes[i].burst_time; // for future use 
+        cout << "  Enter Priority (Lower number = Higher Priority): ";
+        cin >> processes[i].priority;
+        processes[i].remaining_time = processes[i].burst_time; 
     }
 
     vector<Process> processes_backup = processes;
@@ -34,8 +36,10 @@ int main() {
         cout << "\nSelect Scheduling Algorithm:";
         cout << "\n1. First Come First Served (FCFS)";
         cout << "\n2. Shortest Job First (SJF)";
+        cout << "\n3. Round Robin (RR)";
+        cout << "\n4. Priority Scheduling";
         cout << "\n3. Exit";
-        cout << "\nEnter choice (1-3): ";
+        cout << "\nEnter choice (1-4): ";
         cin >> choice;
 
         switch (choice) {
@@ -53,13 +57,30 @@ int main() {
                 Scheduler::printTable(temp);
                 break;
             }
-            case 3:
-                cout << "\nExiting Simulator. Bye!\n";
+            case 3: {
+                vector<Process> temp = processes_backup;
+                int tq;
+                cout << "Enter Time Quantum for Round Robin: ";
+                cin >> tq;
+                cout << "\nRunning Round Robin...";
+                Scheduler::runRoundRobin(temp, tq);
+                Scheduler::printTable(temp);
+                break;
+            }
+            case 4: {
+                vector<Process> temp = processes_backup;
+                cout << "\nRunning Priority Scheduling...";
+                Scheduler::runPriority(temp);
+                Scheduler::printTable(temp);
+                break;
+            }
+            case 5:
+                cout << "\nExiting Simulator...\n";
                 break;
             default:
-                cout << "\nInvalid choice! Please try again.";
+                cout << "\nInvalid choice! Please try again...";
         }
-    } while (choice != 3);
+    } while (choice != 5);
 
     return 0;
 }

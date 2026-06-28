@@ -1,4 +1,4 @@
-//Algorithms actual logic (FCFS, SJF, etc.)
+//Algorithms actual logic (FCFS, SJF, RR, Priority Sheduling)
 // Turnaround Time (TAT) = Completion Time - Arrival Time
 // Waiting Time (WT) = Turnaround Time - Burst Time
 
@@ -133,5 +133,121 @@ void Scheduler::runSJF(vector<Process>& processes) {
     processes = completed_processes;
     
     // Sorting the processes again according to PID so that the table appears clean and organized
+    sort(processes.begin(), processes.end(), comparePID);
+}
+
+void Scheduler::runRoundRobin(vector<Process>& processes, int time_quantum) {
+    sort(processes.begin(), processes.end(), compareArrival);
+    
+    queue<size_t> ready_queue;
+    int current_time = 0;
+    size_t index = 0;
+    int n = processes.size();
+    int completed = 0;
+    vector<bool> in_queue(n, false);
+
+    cout << "\n--- [Round Robin Gantt Chart] ---\n|";
+
+    // Start with the first arrived process
+    if (n > 0) {
+        if (processes[0].arrival_time > current_time) {
+            cout << " IDLE (" << processes[0].arrival_time - current_time << "s) |";
+            current_time = processes[0].arrival_time;
+        }
+        ready_queue.push(0);
+        in_queue[0] = true;
+        index = 1;
+    }
+
+    while (completed < n) {
+        if (ready_queue.empty()) {
+            cout << " IDLE (" << processes[index].arrival_time - current_time << "s) |";
+            current_time = processes[index].arrival_time;
+            ready_queue.push(index);
+            in_queue[index] = true;
+            index++;
+            continue;
+        }
+
+        size_t curr_idx = ready_queue.front();
+        ready_queue.pop();
+
+        int execution_time = min(processes[curr_idx].remaining_time, time_quantum);
+        cout << " P" << processes[curr_idx].pid << " (" << execution_time << "s) |";
+
+        processes[curr_idx].remaining_time -= execution_time;
+        current_time += execution_time;
+
+        // Check for newly arrived processes during execution context
+        while (index < (size_t)n && processes[index].arrival_time <= current_time) {
+            if (!in_queue[index]) {
+                ready_queue.push(index);
+                in_queue[index] = true;
+            }
+            index++;
+        }
+
+        // If current process is not finished, put it back in the queue
+        if (processes[curr_idx].remaining_time > 0) {
+            ready_queue.push(curr_idx);
+        } else {
+            processes[curr_idx].completion_time = current_time;
+            processes[curr_idx].turnaround_time = processes[curr_idx].completion_time - processes[curr_idx].arrival_time;
+            processes[curr_idx].waiting_time = processes[curr_idx].turnaround_time - processes[curr_idx].burst_time;
+            completed++;
+        }
+    }
+    cout << "\n";
+    sort(processes.begin(), processes.end(), comparePID);
+}
+
+
+struct ComparePriority {
+    bool operator()(const Process& a, const Process& b) {
+        if (a.priority == b.priority)
+            return a.arrival_time > b.arrival_time; // FCFS if priorities are equal
+        return a.priority > b.priority; // Min-heap based on priority number
+    }
+};
+
+void Scheduler::runPriority(vector<Process>& processes) {
+    sort(processes.begin(), processes.end(), compareArrival);
+
+    vector<Process> completed_processes;
+    priority_queue<Process, vector<Process>, ComparePriority> ready_pq;
+
+    int current_time = 0;
+    size_t index = 0;
+    int n = processes.size();
+
+    cout << "\n--- [Priority Gantt Chart] ---\n|";
+
+    while (index < (size_t)n || !ready_pq.empty()) {
+        while (index < (size_t)n && processes[index].arrival_time <= current_time) {
+            ready_pq.push(processes[index]);
+            index++;
+        }
+
+        if (ready_pq.empty()) {
+            cout << " IDLE (" << processes[index].arrival_time - current_time << "s) |";
+            current_time = processes[index].arrival_time;
+            continue;
+        }
+
+        Process current_process = ready_pq.top();
+        ready_pq.pop();
+
+        cout << " P" << current_process.pid << " (" << current_process.burst_time << "s) |";
+
+        current_time += current_process.burst_time;
+        current_process.completion_time = current_time;
+        current_process.turnaround_time = current_process.completion_time - current_process.arrival_time;
+        current_process.waiting_time = current_process.turnaround_time - current_process.burst_time;
+
+        completed_processes.push_back(current_process);
+    }
+    cout << "\n";
+
+    processes = completed_processes;
     sort(processes.begin(), processes.end(), comparePID);
 }

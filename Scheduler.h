@@ -1,4 +1,4 @@
-//Scheduling algorithms ki declarations
+//Scheduling algorithm declarations
 
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
@@ -12,6 +12,10 @@ public:
     static void runFCFS(std::vector<Process>& processes);
 
     static void runSJF(std::vector<Process>& processes);
+
+    static void runRoundRobin(std::vector<Process>& processes, int time_quantum);
+    
+    static void runPriority(std::vector<Process>& processes);
     
     // to print the result in terminal
     static void printTable(const std::vector<Process>& processes);
